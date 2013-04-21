@@ -39,7 +39,11 @@ ConcurrentMap<Integer, Integer> toolColors;
 ConcurrentMap<Integer, Vector> fingerPositions;
 ConcurrentMap<Integer, Vector> toolPositions;
 Vector handPosition;
+Vector sphereCenter;
+float sphereRadius;
 
+static float LEAP_WIDTH = 200.0; // in mm
+static float LEAP_HEIGHT = 700.0; // in mm
 
 void setup()
 {
@@ -48,12 +52,14 @@ void setup()
   frameRate(30);
   ellipseMode(CENTER);
 
+  
   leapMotion = new LeapMotion(this);
   fingerColors = new ConcurrentHashMap<Integer, Integer>();
   toolColors = new ConcurrentHashMap<Integer, Integer>();
   fingerPositions = new ConcurrentHashMap<Integer, Vector>();
   toolPositions = new ConcurrentHashMap<Integer, Vector>();
   handPosition = new Vector();
+  sphereCenter = new Vector();
 }
 
 void draw()
@@ -61,6 +67,17 @@ void draw()
   fill(20);
   rect(0, 0, width, height);
   
+  // X Z is the planar coordinate frame
+  float handX = handPosition.getX();  //varies from 
+  float handY = handPosition.getY();  //varies from 
+  float handZ = handPosition.getZ();  //varies from 
+  println("hand X " + handX + "\n hand Y " + handY +"\n hand Z " + handZ );
+  println("leapx" + leapToScreenX(handX) + "leapz" + leapToScreenZ(handZ));
+  ellipse(leapToScreenX(handX), leapToScreenZ(handZ), 24.0, 24.0);
+    
+  
+  /*
+  //Draw all finger points
   for (Map.Entry entry : fingerPositions.entrySet())
   {
     Integer fingerId = (Integer) entry.getKey();
@@ -70,7 +87,12 @@ void draw()
     fill(fingerColors.get(fingerId));
     noStroke();
     ellipse(leapToScreenX(position.getX()), leapToScreenY(position.getY()), 24.0, 24.0);
+    textSize(32);
+    fill(0, 102, 153);
+    text(fingerId, leapToScreenX(position.getX()),leapToScreenY(position.getY()));
   }
+  */
+  
   /*
   for (Map.Entry entry : toolPositions.entrySet())
   {
@@ -106,14 +128,11 @@ void onFrame(final Controller controller)
     //get first hand
     Hand hand = frame.hands().get(0);
     handPosition = hand.palmPosition();
-    println("hand position: x: " + handPosition.getX() + " y: " + handPosition.getY() + " z: " + handPosition.getZ());
+    //println("hand position: x: " + handPosition.getX() + " y: " + handPosition.getY() + " z: " + handPosition.getZ());
   }  
 
   // todo:  clean up expired finger/toolIds
 }
-
-static float LEAP_WIDTH = 200.0; // in mm
-static float LEAP_HEIGHT = 700.0; // in mm
 
 float leapToScreenX(float x)
 {
@@ -128,6 +147,18 @@ float leapToScreenX(float x)
   }
 }
 
+float leapToScreenZ(float z)
+{
+  float c = height / 2.0;
+  if (z > 0.0)
+  {
+    return lerp(c, height, z/LEAP_WIDTH);
+  }
+  else
+  {
+    return lerp(c, 0.0, -z/LEAP_WIDTH);
+  }
+}
 float leapToScreenY(float y)
 {
   return lerp(height, 0.0, y/LEAP_HEIGHT);
